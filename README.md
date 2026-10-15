@@ -71,3 +71,7 @@ rm -rf ~/Applications/UTCClock.app ~/Library/LaunchAgents/local.utcclock.plist
 2. In [privitera/homebrew-tap](https://github.com/privitera/homebrew-tap), point `Formula/utc-clock.rb` at the new tag's tarball, update `sha256` (`curl -sL <url> | shasum -a 256`), run `brew audit --strict privitera/tap/utc-clock`, and push.
 
 Users pick it up with `brew upgrade`.
+
+## License
+
+[MIT](./LICENSE)
