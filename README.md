@@ -23,6 +23,7 @@ If you quit it from the menu, `brew services restart utc-clock` brings it back.
 Needs the Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
+git clone https://github.com/privitera/utc-clock.git && cd utc-clock
 ./build.sh
 ```
 
@@ -59,3 +60,14 @@ From source:
 launchctl bootout gui/$(id -u)/local.utcclock
 rm -rf ~/Applications/UTCClock.app ~/Library/LaunchAgents/local.utcclock.plist
 ```
+
+## Bugs and ideas
+
+[Open an issue](https://github.com/privitera/utc-clock/issues).
+
+## Releasing
+
+1. Tag and publish: `git tag -a vX.Y.Z -m "utc-clock X.Y.Z" && git push origin vX.Y.Z && gh release create vX.Y.Z --generate-notes`
+2. In [privitera/homebrew-tap](https://github.com/privitera/homebrew-tap), point `Formula/utc-clock.rb` at the new tag's tarball, update `sha256` (`curl -sL <url> | shasum -a 256`), run `brew audit --strict privitera/tap/utc-clock`, and push.
+
+Users pick it up with `brew upgrade`.
