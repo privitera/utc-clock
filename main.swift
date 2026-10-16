@@ -1,6 +1,6 @@
 // UTCClock: menu bar clock showing UTC with seconds.
-// Click copies an ISO-8601 timestamp; right-click (or Control-click) for Quit
-// and Uninstall.
+// Click copies an ISO-8601 timestamp and flashes the Seneca owl; right-click
+// (or Control-click) for Quit and Uninstall.
 // Uses a plain NSStatusItem title update, which macOS 26 redraws in place
 // (SwiftBar rebuilds its item on each update, which flashes at 1 Hz).
 import AppKit
@@ -21,6 +21,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         .font: NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular),
     ]
 
+    // The Seneca owl ("Seneca Owl Logo Black.svg", verbatim), flashed in place
+    // of the time after a copy.
+    private static let owlSVG = """
+        <svg width="1146" height="556" viewBox="0 0 1146 556" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1145.23 116.802L1108.18 205.164L634.07 233.449C633.213 233.488 632.356 233.527 631.498 233.527C620.005 233.527 608.941 228.93 600.837 220.67C592.11 211.787 587.668 199.593 588.642 187.203L601.188 24.9734L688.302 13.9088L678.173 144.62L1145.23 116.764V116.802ZM689.393 0H689.315L689.354 0.428561V0H689.393ZM514.501 233.566C525.994 233.566 537.059 228.969 545.163 220.709C553.89 211.826 558.331 199.632 557.357 187.242L544.812 25.0124L457.697 13.9477L467.827 144.659L0.772949 116.802L37.824 205.164L511.93 233.449C512.787 233.488 513.644 233.527 514.501 233.527V233.566ZM402.88 554.286L497.32 536.793L555.799 332.486C559.305 320.252 557.202 307.084 550.072 296.565C542.942 286.006 531.488 279.188 518.826 277.903L48.1874 229.943L86.0177 320.252L458.983 358.238L402.841 554.325L402.88 554.286ZM595.538 297.11C588.448 307.98 586.616 321.46 590.59 333.81L656.433 538.195L752.509 556L688.731 358.044L1059.98 320.252L1097.81 229.943L627.135 277.864C614.239 279.188 602.59 286.24 595.499 297.11H595.538Z" fill="#232527"/>
+        </svg>
+        """
+    private let owl = NSImageView()
+
     private static func utcFormatter(_ format: String) -> DateFormatter {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -38,6 +47,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.target = self
             button.action = #selector(clicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+
+            // The owl covers the button, centered and hidden until a copy. As a
+            // template image, the menu bar tints it for light and dark mode.
+            if let image = NSImage(data: Data(Self.owlSVG.utf8)) {
+                image.size = NSSize(width: image.size.width * 13 / image.size.height, height: 13)
+                image.isTemplate = true
+                owl.image = image
+                owl.frame = button.bounds
+                owl.autoresizingMask = [.width, .height]
+                owl.isHidden = true
+                button.addSubview(owl)
+            }
         }
 
         // Timers pause during sleep, so re-align to the second boundary on wake.
@@ -61,8 +82,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setTitle(titleFormat.string(from: Date()))
     }
 
-    private func setTitle(_ text: String) {
-        item.button?.attributedTitle = NSAttributedString(string: text, attributes: titleAttrs)
+    private func setTitle(_ text: String, color: NSColor? = nil) {
+        var attrs = titleAttrs
+        attrs[.foregroundColor] = color
+        item.button?.attributedTitle = NSAttributedString(string: text, attributes: attrs)
     }
 
     @objc private func clicked() {
@@ -82,11 +105,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(isoFormat.string(from: Date()), forType: .string)
 
-        // Show a brief confirmation in place of the time.
+        // Briefly swap the time for the owl. The time stays as invisible text,
+        // so the item keeps its width. "Copied ✓" if the owl didn't load.
         showingCopied = true
-        setTitle("Copied ✓")
+        if owl.image != nil, let text = item.button?.attributedTitle.string {
+            setTitle(text, color: .clear)
+            owl.isHidden = false
+        } else {
+            setTitle("Copied ✓")
+        }
         restoreTitle?.cancel()
         let work = DispatchWorkItem { [weak self] in
+            self?.owl.isHidden = true
             self?.showingCopied = false
             self?.tick()
         }
