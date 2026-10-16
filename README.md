@@ -18,7 +18,7 @@ brew services start utc-clock    # start now and at every login
 
 Keep the full `privitera/tap/utc-clock` name: Homebrew only loads formulae from third-party taps you've trusted, and installing by full name trusts this one.
 
-If you quit it from the menu, `brew services restart utc-clock` brings it back. To update: `brew upgrade utc-clock && brew services restart utc-clock` (upgrading doesn't restart a running service).
+If you quit it from the menu, `brew services restart utc-clock` brings it back. To update: `brew update && brew upgrade utc-clock && brew services restart utc-clock`. Homebrew only refreshes taps once a day on its own, and upgrading doesn't restart a running service.
 
 ### From source
 
@@ -74,7 +74,7 @@ rm -rf ~/Applications/UTCClock.app ~/Library/LaunchAgents/local.utcclock.plist
 1. Tag and publish: `git tag -a vX.Y.Z -m "utc-clock X.Y.Z" && git push origin vX.Y.Z && gh release create vX.Y.Z --generate-notes`
 2. In [privitera/homebrew-tap](https://github.com/privitera/homebrew-tap), point `Formula/utc-clock.rb` at the new tag's tarball, update `sha256` (`curl -sL <url> | shasum -a 256`), run `brew audit --strict privitera/tap/utc-clock`, and push.
 
-Users pick it up with `brew upgrade utc-clock && brew services restart utc-clock`.
+Users pick it up with `brew update && brew upgrade utc-clock && brew services restart utc-clock`.
 
 ## License
 
