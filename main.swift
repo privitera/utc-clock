@@ -1,6 +1,6 @@
 // UTCClock: menu bar clock showing UTC with seconds.
 // Click copies an ISO-8601 timestamp and flashes the Seneca owl; right-click
-// (or Control-click) for Quit and Uninstall.
+// (or Control-click) for Uninstall and Quit.
 // Uses a plain NSStatusItem title update, which macOS 26 redraws in place
 // (SwiftBar rebuilds its item on each update, which flashes at 1 Hz).
 import AppKit
@@ -9,11 +9,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()  // right-click only
     private var timer: Timer?
-    private var showingCopied = false
-    private var restoreTitle: DispatchWorkItem?
+    private var restoreTitle: DispatchWorkItem?  // pending while the owl shows
 
-    private let titleFormat = AppDelegate.utcFormatter("HH:mm:ss 'UTC'")
-    private let isoFormat = AppDelegate.utcFormatter("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    private let titleFormat: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.dateFormat = "HH:mm:ss 'UTC'"
+        return f
+    }()
 
     // The font goes on each title: the menu bar ignores button.font, and
     // proportional digits make the item's width wobble every second.
@@ -29,14 +33,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         </svg>
         """
     private let owl = NSImageView()
-
-    private static func utcFormatter(_ format: String) -> DateFormatter {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
-        f.dateFormat = format
-        return f
-    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         item.autosaveName = "UTCClock"  // remember menu bar position across launches
@@ -78,7 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func tick() {
-        guard !showingCopied else { return }
+        guard restoreTitle == nil else { return }
         setTitle(titleFormat.string(from: Date()))
     }
 
@@ -103,11 +99,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func copyTimestamp() {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(isoFormat.string(from: Date()), forType: .string)
+        NSPasteboard.general.setString(Date().formatted(.iso8601), forType: .string)
 
         // Briefly swap the time for the owl. The time stays as invisible text,
         // so the item keeps its width. "Copied ✓" if the owl didn't load.
-        showingCopied = true
         if owl.image != nil, let text = item.button?.attributedTitle.string {
             setTitle(text, color: .clear)
             owl.isHidden = false
@@ -116,8 +111,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         restoreTitle?.cancel()
         let work = DispatchWorkItem { [weak self] in
+            self?.restoreTitle = nil
             self?.owl.isHidden = true
-            self?.showingCopied = false
             self?.tick()
         }
         restoreTitle = work

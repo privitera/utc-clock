@@ -3,7 +3,7 @@
 A tiny macOS menu bar clock that shows UTC with seconds.
 
 - **Click** copies the current time as an ISO-8601 timestamp (`2026-10-11T04:56:40Z`) and briefly shows the Seneca owl in its place.
-- **Right-click** (or Control-click) opens a menu with **Quit UTC Clock** and **Uninstall UTC Clock…**.
+- **Right-click** (or Control-click) opens a menu with **Uninstall UTC Clock…** and **Quit UTC Clock**.
 
 ## Install
 
