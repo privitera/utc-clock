@@ -3,7 +3,7 @@
 A tiny macOS menu bar clock that shows UTC with seconds.
 
 - **Click** copies the current time as an ISO-8601 timestamp (`2026-10-11T04:56:40Z`) and flashes `Copied ✓`.
-- **Right-click** (or Control-click) opens a menu with **Quit UTC Clock**.
+- **Right-click** (or Control-click) opens a menu with **Quit UTC Clock** and **Uninstall UTC Clock…**.
 
 ## Install
 
@@ -16,7 +16,9 @@ brew install privitera/tap/utc-clock
 brew services start utc-clock    # start now and at every login
 ```
 
-If you quit it from the menu, `brew services restart utc-clock` brings it back.
+Keep the full `privitera/tap/utc-clock` name: Homebrew only loads formulae from third-party taps you've trusted, and installing by full name trusts this one.
+
+If you quit it from the menu, `brew services restart utc-clock` brings it back. To update: `brew upgrade utc-clock && brew services restart utc-clock` (upgrading doesn't restart a running service).
 
 ### From source
 
@@ -48,10 +50,12 @@ They'd be the obvious choice, but on macOS 26 SwiftBar rebuilds its menu bar ite
 
 ## Uninstall
 
-Homebrew:
+Right-click the clock and choose **Uninstall UTC Clock…**. It works for either install method: it quits the clock, removes it from login, and then runs `brew uninstall utc-clock` and `brew untap privitera/tap` (Homebrew) or deletes the app and its LaunchAgent (from source). If something fails, an alert points to the log.
+
+By hand, Homebrew:
 
 ```bash
-brew services stop utc-clock && brew uninstall utc-clock
+brew services stop utc-clock && brew uninstall utc-clock && brew untap privitera/tap
 ```
 
 From source:
@@ -70,7 +74,7 @@ rm -rf ~/Applications/UTCClock.app ~/Library/LaunchAgents/local.utcclock.plist
 1. Tag and publish: `git tag -a vX.Y.Z -m "utc-clock X.Y.Z" && git push origin vX.Y.Z && gh release create vX.Y.Z --generate-notes`
 2. In [privitera/homebrew-tap](https://github.com/privitera/homebrew-tap), point `Formula/utc-clock.rb` at the new tag's tarball, update `sha256` (`curl -sL <url> | shasum -a 256`), run `brew audit --strict privitera/tap/utc-clock`, and push.
 
-Users pick it up with `brew upgrade`.
+Users pick it up with `brew upgrade utc-clock && brew services restart utc-clock`.
 
 ## License
 
